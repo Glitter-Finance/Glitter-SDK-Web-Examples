@@ -1091,6 +1091,18 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
+"@blockshake/defly-connect@^1.1.1":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@blockshake/defly-connect/-/defly-connect-1.1.1.tgz#06e05975316098a8d7684611775c4929d6a4ebd7"
+  integrity sha512-Ft3/zqnUeV5dmTXIyTB5amyUdwG899NQ9PSVdGf9oNsnq+Q+IJMVo+GjntTC8sC7/z9cDRYJ2xnj3YjCtTfQcg==
+  dependencies:
+    "@walletconnect/client" "^1.8.0"
+    "@walletconnect/types" "^1.8.0"
+    bowser "2.11.0"
+    buffer "^6.0.3"
+    lottie-web "^5.9.6"
+    qr-code-styling "1.6.0-rc.1"
+
 "@blocto/sdk@^0.2.22":
   version "0.2.22"
   resolved "https://registry.yarnpkg.com/@blocto/sdk/-/sdk-0.2.22.tgz#c7fe62809de0640a0a3f7a043c5bbceb8be17e38"
@@ -7078,16 +7090,18 @@ get-symbol-description@^1.0.0:
     call-bind "^1.0.2"
     get-intrinsic "^1.1.1"
 
-glitter-bridge-sdk-web-dev@^1.0.0-19:
-  version "1.0.0-19"
-  resolved "https://registry.yarnpkg.com/glitter-bridge-sdk-web-dev/-/glitter-bridge-sdk-web-dev-1.0.0-19.tgz#ee891a295626f22732f3481e538b6bf1761079c4"
-  integrity sha512-2eu7g8+1lbZqSZCIxRD8eZAhNGEviCiNMoRbVhY58mrVDNnpx1KoZjd0ZmthDT7aNUSvgdw0P5Hu8rVV82zxbw==
+glitter-bridge-sdk-web-dev@^1.0.0-31:
+  version "1.0.0-31"
+  resolved "https://registry.yarnpkg.com/glitter-bridge-sdk-web-dev/-/glitter-bridge-sdk-web-dev-1.0.0-31.tgz#c055cbeef611e3f3511d61bbc96ca433224f17d3"
+  integrity sha512-tj6nnTzwp8xP7F8veSMPJ/mmve+t9yWVtQB5FwLk3/b/iNFtfQkE7LRT1CcXMkV/4TGqZjvhqDzSz0f+uDcTdw==
   dependencies:
+    "@blockshake/defly-connect" "^1.1.1"
     "@coin98-com/connect-sdk" "^1.0.9"
     "@metamask/onboarding" "^1.0.1"
     "@perawallet/connect" "^1.0.7"
     "@solana/wallet-adapter-wallets" "^0.19.11"
     "@solana/web3.js" "^1.73.2"
+    algosdk "^2.1.0"
     ethers "^6.0.2"
 
 glob-parent@^5.1.2, glob-parent@~5.1.2:
@@ -8810,6 +8824,11 @@ loose-envify@^1.0.0, loose-envify@^1.1.0, loose-envify@^1.4.0:
   integrity sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==
   dependencies:
     js-tokens "^3.0.0 || ^4.0.0"
+
+lottie-web@^5.9.6:
+  version "5.10.2"
+  resolved "https://registry.yarnpkg.com/lottie-web/-/lottie-web-5.10.2.tgz#a1c952b6734759fcd369eba73b6b7e3d9a76ce0b"
+  integrity sha512-d0PFIGiwuMsJYaF4uPo+qG8dEorlI+xFI2zrrFtE1bGO4WoLIz+NjremxEq1swpR7juR10aeOtmNh3d6G3ub0A==
 
 loupe@^2.3.1:
   version "2.3.6"
