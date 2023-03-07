@@ -1,5 +1,4 @@
-import {Box, Card, CardContent, CardHeader, Container, Stack, Typography} from "@mui/material";
-import React from "react";
+import {Card, CardContent, CardHeader, Container, Stack} from "@mui/material";
 import Item from "../Item";
 
 function TransactionsSection() {
@@ -32,8 +31,8 @@ function TransactionsSection() {
                   <Item className="transactions-table-data-columns">ALGO → xALGO</Item>
                   <Item className="transactions-table-data-columns">1000.0</Item>
                   <Item className="transactions-table-data-columns">
-                    <img src="/algorand-circle.png"/>
-                    <img src="/solana-circle.png"/>
+                    <img src="/algorand-circle.png" alt="Broken"/>
+                    <img src="/solana-circle.png" alt="Broken"/>
                   </Item>
                 </Stack>
                 <Stack direction="row" spacing={2}>
@@ -44,8 +43,8 @@ function TransactionsSection() {
                   <Item className="transactions-table-data-columns">ALGO → xALGO</Item>
                   <Item className="transactions-table-data-columns">1000.0</Item>
                   <Item className="transactions-table-data-columns">
-                    <img src="/algorand-circle.png"/>
-                    <img src="/solana-circle.png"/>
+                    <img src="/algorand-circle.png" alt="Broken"/>
+                    <img src="/solana-circle.png" alt="Broken"/>
                   </Item>
                 </Stack>
                 <Stack direction="row" spacing={2}>
@@ -56,8 +55,8 @@ function TransactionsSection() {
                   <Item className="transactions-table-data-columns">ALGO → xALGO</Item>
                   <Item className="transactions-table-data-columns">1000.0</Item>
                   <Item className="transactions-table-data-columns">
-                    <img src="/algorand-circle.png"/>
-                    <img src="/solana-circle.png"/>
+                    <img src="/algorand-circle.png" alt="Broken"/>
+                    <img src="/solana-circle.png" alt="Broken"/>
                   </Item>
                 </Stack>
               </Item>

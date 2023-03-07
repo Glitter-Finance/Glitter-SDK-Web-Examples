@@ -1,26 +1,13 @@
-const webpack = require('webpack');
-module.exports = function override(config, env) {
-    config.resolve.fallback = {
-        url: require.resolve('url'),
-        fs: require.resolve('fs'),
-        assert: require.resolve('assert'),
-        crypto: require.resolve('crypto-browserify'),
-        http: require.resolve('stream-http'),
-        https: require.resolve('https-browserify'),
-        os: require.resolve('os-browserify/browser'),
-        buffer: require.resolve('buffer'),
-        stream: require.resolve('stream-browserify'),
-        zlib: require.resolve("browserify-zlib"),
-        path: require.resolve("path-browserify"),
-        net: require.resolve('net'),
-        tls: require.resolve('tls'),
-    };
-    config.plugins.push(
-        new webpack.ProvidePlugin({
-            process: 'process/browser',
-            Buffer: ['buffer', 'Buffer', 'tls'],
-        }),
-    );
+const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
 
-    return config;
+module.exports = function override(config, env) {
+  config.resolve.fallback = {
+    readline: require.resolve('readline'),
+    fs: require.resolve('browserify-fs'),
+    console: require.resolve('console-browserify')
+  }
+  config.plugins.push(new NodePolyfillPlugin({ 
+    excludeAliases: ['console'],
+   }))
+  return config
 }

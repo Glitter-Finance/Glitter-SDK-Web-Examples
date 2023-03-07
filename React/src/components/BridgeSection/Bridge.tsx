@@ -4,16 +4,13 @@ import {
   Card,
   CardContent,
   CardHeader,
-  Checkbox,
   Grid,
   Radio,
   Stack,
-  TextField,
   Typography
 } from "@mui/material";
 import Item from "../Item";
 import React from "react";
-import {AccountCircle} from "@mui/icons-material";
 
 function Bridge() {
   return (
@@ -28,13 +25,13 @@ function Bridge() {
               </Item>
               <Item>
                 <Box sx={{display: 'flex', alignItems: 'flex-end'}} className="bridge-box">
-                  <img src="/phantom.png" className="input-image"/>
+                  <img src="/phantom.png" className="input-image" alt="broken"/>
                   <Typography>{"4iVQ242Ck7azm9bu8HapFt7qZzkW6bKVXb3cXhK6vfEj".slice(0, 20)}...</Typography>
                 </Box>
               </Item>
               <Item>
                 <Box sx={{display: 'flex', alignItems: 'flex-end'}} className="bridge-box">
-                  <img src="/solana.png" className="input-image"/>
+                  <img src="/solana.png" className="input-image" alt="broken"/>
                   <Typography>SOLANA</Typography>
                 </Box>
               </Item>
@@ -44,19 +41,19 @@ function Bridge() {
               <Item>
                 <Stack direction="row" spacing={2}>
                   <Item><Radio className="radio-item"/></Item>
-                  <Item><img src="/solana.png" className="input-image"/></Item>
+                  <Item><img src="/solana.png" className="input-image" alt="broken"/></Item>
                   <Item><Typography>xAlgo</Typography></Item>
                   <Item><Typography>3045.0</Typography></Item>
                 </Stack>
                 <Stack direction="row" spacing={2}>
                   <Item><Radio className="radio-item"/></Item>
-                  <Item><img src="/solana.png" className="input-image"/></Item>
+                  <Item><img src="/solana.png" className="input-image" alt="broken"/></Item>
                   <Item><Typography>xAlgo</Typography></Item>
                   <Item><Typography>3045.0</Typography></Item>
                 </Stack>
                 <Stack direction="row" spacing={2}>
                   <Item><Radio className="radio-item"/></Item>
-                  <Item><img src="/solana.png" className="input-image"/></Item>
+                  <Item><img src="/solana.png" className="input-image" alt="broken"/></Item>
                   <Item><Typography>xAlgo</Typography></Item>
                   <Item><Typography>3045.0</Typography></Item>
                 </Stack>
@@ -70,13 +67,13 @@ function Bridge() {
               </Item>
               <Item>
                 <Box sx={{display: 'flex', alignItems: 'flex-end'}} className="bridge-box">
-                  <img src="/phantom.png" className="input-image"/>
+                  <img src="/phantom.png" className="input-image" alt="broken"/>
                   <Typography>{"4iVQ242Ck7azm9bu8HapFt7qZzkW6bKVXb3cXhK6vfEj".slice(0, 20)}...</Typography>
                 </Box>
               </Item>
               <Item>
                 <Box sx={{display: 'flex', alignItems: 'flex-end'}} className="bridge-box">
-                  <img src="/algorand.png" className="input-image"/>
+                  <img src="/algorand.png" className="input-image" alt="broken"/>
                   <Typography>ALGORAND</Typography>
                 </Box>
               </Item>
@@ -86,7 +83,7 @@ function Bridge() {
               <Item>
                 <Stack direction="row" spacing={2}>
                   <Item><Radio className="radio-item"/></Item>
-                  <Item><img src="/algorand.png" className="input-image"/></Item>
+                  <Item><img src="/algorand.png" className="input-image" alt="broken"/></Item>
                   <Item><Typography>xAlgo</Typography></Item>
                   <Item><Typography>3045.0</Typography></Item>
                 </Stack>

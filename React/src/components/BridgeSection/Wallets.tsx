@@ -1,7 +1,6 @@
 import {Box, Card, CardContent, CardHeader, Link, Stack, Typography} from "@mui/material";
 import Item from "../Item";
-import React from "react";
-import {Chains, Wallets as GlitterWallets} from "glitter-bridge-sdk-web-dev";
+import { Wallets as GlitterWallets, Chains, SolanaBridge, AlgorandBridge } from "glitter-bridge-sdk-web-dev";
 declare global {
   interface Window {
     coin98?: any;
@@ -10,58 +9,44 @@ declare global {
 function Wallets() {
 
   const onMetamask = async () => {
-    try {
-      const metamask = new GlitterWallets.networks[Chains.ETHEREUM].metamask();
-      const addressResponse = await metamask.connect()
-      const provider = await metamask.getProvider()
-      console.log(addressResponse, provider, Chains.ETHEREUM);
-
-      const switchChainResponse = await metamask.switchChain("0x38")
-      console.log(switchChainResponse);
-    } catch (e) {
-      console.log(3);
-    }
   }
 
-  const onPhantom = () => {
-    const phantom = new GlitterWallets.networks[Chains.SOLANA].phantom("https://polygon-rpc.com");
-    phantom.getProvider().then((response) => {
-      console.log(response);
-      phantom.connect()
-        .then((response) => {
-          console.log("Response", response)
-        })
-        .catch((err) => {
-          console.log("Error", err)
-        })
-    })
+  const onPhantom = async () => {
+    const phantom = new GlitterWallets.networks[Chains.SOLANA].phantom("RPC_URL");
+    const result = await phantom.connect();
+    const bridge = new SolanaBridge("RPC_URL");
+    const optInTransaction = await bridge.optIn(result?.toString() as string, "RAY");
+    const phantomProvider = await phantom.getProvider();
+    await phantomProvider.signAndSendTransaction(optInTransaction);
   }
 
   const onSolfare = () => {
-    const solfare = new GlitterWallets.networks[Chains.SOLANA].solfare("https://polygon-rpc.com");
-    solfare.connect()
-      .then((response) => {
-        console.log("Response", response)
-      })
-      .catch((err) => {
-        console.log("Error", err)
-      })
+
   }
 
   const onPera = async () => {
-    try {
-      const pera = new GlitterWallets.networks[Chains.ALGO].pera();
-      const response = await pera.connect();
-      console.log(response);
-    } catch (e) {
-      console.log(e);
-    }
+
   }
 
   const onCoin98 = async () => {
-    const coin98 = new GlitterWallets.networks[Chains.SOLANA].coin98();
-    const response = await coin98.connect(101);
+
+  }
+
+  const onDefly = async () => {
+    const defly = new GlitterWallets.networks[Chains.ALGO].defly();
+    const deflyResponse = await defly.connect();
+    console.log(deflyResponse.wallet);
+    const bridge = new AlgorandBridge();
+    const algoTransactions = await bridge.optIn(deflyResponse.wallet[0], "xGLI");
+    let txs = algoTransactions.map((txn) => {
+      return {
+        txn: txn,
+      };
+    });
+    const response = await deflyResponse.provider.signTransaction([txs]);
     console.log(response);
+    const transactionResponse = await bridge.sendSignTransaction(response);
+    console.log(transactionResponse);
   }
 
   return(
@@ -71,7 +56,7 @@ function Wallets() {
         <Stack>
           <Item>
             <Box sx={{ display: 'flex', alignItems: 'flex-end' }}>
-              <img src="/phantom.png" className="input-image"/>
+              <img src="/phantom.png" className="input-image" alt="broken"/>
               <Typography>
                 <Link onClick={() => { onPhantom() }}>Phantom</Link>
               </Typography>
@@ -79,7 +64,8 @@ function Wallets() {
           </Item>
           <Item>
             <Box sx={{ display: 'flex', alignItems: 'flex-end' }}>
-              <img src="/solflare.png" className="input-image"/>
+
+              <img src="/solflare.png" className="input-image" alt="broken"/>
               <Typography>
                 <Link onClick={() => { onSolfare() }}>Solfare</Link>
               </Typography>
@@ -87,7 +73,7 @@ function Wallets() {
           </Item>
           <Item>
             <Box sx={{ display: 'flex', alignItems: 'flex-end' }}>
-              <img src="/phantom.png" className="input-image"/>
+              <img src="/phantom.png" className="input-image" alt="broken"/>
               <Typography>
                 <Link onClick={() => { onMetamask() }}>Metamask</Link>
               </Typography>
@@ -95,7 +81,7 @@ function Wallets() {
           </Item>
           <Item>
             <Box sx={{ display: 'flex', alignItems: 'flex-end' }}>
-              <img src="/phantom.png" className="input-image"/>
+              <img src="/phantom.png" className="input-image" alt="broken"/>
               <Typography>
                 <Link onClick={() => { onPera() }}>Pera</Link>
               </Typography>
@@ -103,9 +89,17 @@ function Wallets() {
           </Item>
           <Item>
             <Box sx={{ display: 'flex', alignItems: 'flex-end' }}>
-              <img src="/phantom.png" className="input-image"/>
+              <img src="/phantom.png" className="input-image" alt="broken"/>
               <Typography>
                 <Link onClick={() => { onCoin98() }}>Coin98</Link>
+              </Typography>
+            </Box>
+          </Item>
+          <Item>
+            <Box sx={{ display: 'flex', alignItems: 'flex-end' }}>
+              <img src="/phantom.png" className="input-image" alt="broken"/>
+              <Typography>
+                <Link onClick={() => { onDefly() }}>Defly</Link>
               </Typography>
             </Box>
           </Item>
