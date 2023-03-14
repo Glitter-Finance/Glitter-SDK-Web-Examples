@@ -3,13 +3,26 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import reducer from "./components/store/reducer";
+import {WalletAction, DispatchType, IWallet} from "./components/store/type";
+import {createStore, applyMiddleware, Store} from "redux"
+import {Provider} from "react-redux"
+import thunk from "redux-thunk"
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
+
+const store: Store<IWallet, WalletAction> & {
+  dispatch: DispatchType
+} = createStore(reducer, applyMiddleware(thunk))
+
+
 root.render(
   <React.StrictMode>
-    <App />
+    <Provider store={store}>
+      <App/>
+    </Provider>
   </React.StrictMode>
 );
 
