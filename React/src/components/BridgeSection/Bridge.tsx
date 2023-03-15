@@ -12,8 +12,9 @@ import {
 import Item from "../Item";
 import React, {useState} from "react";
 import {useSelectors} from "../store/selectors";
-import {AlgorandBridge, SolanaBridge} from "glitter-bridge-sdk-web-dev";
-import {RPC_URL} from "../store/type";
+import {AlgorandBridge, EVMBridge, SolanaBridge} from "glitter-bridge-sdk-web-dev";
+import {BridgeNetworksName, RPC_URL} from "../store/type";
+import {ethers, Wallet} from "ethers";
 
 function Bridge() {
   const [optIn, setOptIn] = useState<boolean>(true);
@@ -21,20 +22,23 @@ function Bridge() {
   const [destinationTokenSymbol, setDestinationTokenSymbol] = useState<string>("");
   const [sourceTokenAmount, setSourceTokenAmount] = useState<number>(0);
   const {wallet} = useSelectors();
-
   const checkForOptIn = async (tokenSymbol: string) => {
-    const bridge = wallet.destinationNetworkName === "solana" ? new SolanaBridge(RPC_URL) : new AlgorandBridge();
-    const exists = await bridge.optInAccountExists(wallet.destinationWalletAddress as string, tokenSymbol);
-    setOptIn(!exists);
-    console.log(exists);
+    if (wallet.destinationNetworkName === BridgeNetworksName.SOLANA || wallet.destinationWalletName === BridgeNetworksName.ALGORAND) {
+      const bridge = wallet.destinationNetworkName === BridgeNetworksName.SOLANA ? new SolanaBridge(RPC_URL) : new AlgorandBridge();
+      const exists = await bridge.optInAccountExists(wallet.destinationWalletAddress as string, tokenSymbol);
+      setOptIn(!exists);
+      console.log(exists);
+    } else {
+      setOptIn(false);
+    }
   }
 
   const optInBtn = async () => {
-    if (wallet.destinationNetworkName === "solana") {
+    if (wallet.destinationNetworkName === BridgeNetworksName.SOLANA) {
       const bridge = new SolanaBridge(RPC_URL);
       const optInTransaction = await bridge.optIn(wallet.destinationWalletAddress as string, destinationTokenSymbol);
       await wallet.destinationWalletProvider.signAndSendTransaction(optInTransaction);
-    } else if (wallet.destinationNetworkName === "algorand") {
+    } else if (wallet.destinationNetworkName === BridgeNetworksName.ALGORAND) {
       const bridge = new AlgorandBridge();
       const optInTransaction = await bridge.optIn(wallet.destinationNetworkName, destinationTokenSymbol);
       const signedTransaction = await wallet.destinationWalletProvider.signTransaction([optInTransaction]);
@@ -44,12 +48,13 @@ function Bridge() {
   }
 
   const bridge = async () => {
-    if (wallet.sourceNetworkName === "solana") {
+    const amount = 100000;
+    if (wallet.sourceNetworkName === BridgeNetworksName.SOLANA) {
       const bridge = new SolanaBridge(RPC_URL);
       console.log(wallet.sourceWalletAddress as string, sourceTokenSymbol, wallet.destinationNetworkName, wallet.destinationWalletAddress as string, destinationTokenSymbol, sourceTokenAmount);
-      const bridgeTransaction = await bridge.bridge(wallet.sourceWalletAddress as string, sourceTokenSymbol, wallet.destinationNetworkName as string, wallet.destinationWalletAddress as string, destinationTokenSymbol, 5);
+      const bridgeTransaction = await bridge.bridge(wallet.sourceWalletAddress as string, sourceTokenSymbol, wallet.destinationNetworkName as string, wallet.destinationWalletAddress as string, destinationTokenSymbol, 1);
       await wallet.sourceWalletProvider.signAndSendTransaction(bridgeTransaction);
-    } else if (wallet.sourceNetworkName === "algorand") {
+    } else if (wallet.sourceNetworkName === BridgeNetworksName.ALGORAND) {
       const bridge = new AlgorandBridge();
       console.log(wallet.sourceWalletAddress as string, sourceTokenSymbol, wallet.destinationNetworkName, wallet.destinationWalletAddress as string, destinationTokenSymbol, sourceTokenAmount);
       const bridgeTransaction = await bridge.bridge(wallet.sourceWalletAddress as string, sourceTokenSymbol, wallet.destinationNetworkName as string, wallet.destinationWalletAddress as string, destinationTokenSymbol, 5);
@@ -57,6 +62,24 @@ function Bridge() {
       const signedTransaction = await wallet.sourceWalletProvider.signTransaction([bridgeTransaction]);
       const transactionResponse = await bridge.sendSignTransaction(signedTransaction);
       console.log(transactionResponse);
+    } else if (wallet.sourceNetworkName === BridgeNetworksName.POLYGON || wallet.sourceNetworkName === BridgeNetworksName.AVALANCHE || wallet.sourceNetworkName === BridgeNetworksName.ETHEREUM) {
+      console.log("EVM");
+      const provider = new ethers.providers.Web3Provider(window.ethereum, 43114);
+      const signer = provider.getSigner();
+      console.log(await signer.getAddress());
+      console.log(await signer.getChainId())
+      const bridge = new EVMBridge(wallet.sourceNetworkName);
+      const bridgeAllowances = await bridge.bridgeAllowance(
+        sourceTokenSymbol,
+        signer
+      )
+      console.log("Bridge Allowance", bridgeAllowances?.toNumber());
+      if (bridgeAllowances && bridgeAllowances?.toNumber() < amount) {
+        const allowance  = await bridge.approve(sourceTokenSymbol, amount.toString(), signer);
+        console.log(allowance);
+      }
+      const bridgeResponse = await bridge.bridge(wallet.destinationNetworkName as string, sourceTokenSymbol, amount.toString(), wallet.destinationWalletAddress as string, signer)
+      console.log(bridgeResponse);
     }
   }
 
@@ -95,7 +118,7 @@ function Bridge() {
                           setSourceTokenAmount(token.balance as number);
                         }}>
                           <Item><Radio className="radio-item"/></Item>
-                          <Item><img src="/solana.png" className="input-image" alt="broken"/></Item>
+                          <Item><img src="/Solana.png" className="input-image" alt="broken"/></Item>
                           <Item><Typography>{token.token}</Typography></Item>
                           <Item><Typography>{token.balance}</Typography></Item>
                         </Stack>
@@ -136,7 +159,7 @@ function Bridge() {
                         setDestinationTokenSymbol(token.token)
                       }}>
                         <Item><Radio className="radio-item"/></Item>
-                        <Item><img src="/solana.png" className="input-image" alt="broken"/></Item>
+                        <Item><img src="/Solana.png" className="input-image" alt="broken"/></Item>
                         <Item><Typography>{token.token}</Typography></Item>
                         <Item><Typography>{token.balance}</Typography></Item>
                       </Stack>

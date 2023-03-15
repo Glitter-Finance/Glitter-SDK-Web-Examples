@@ -20,4 +20,12 @@ export type WalletAction = {
 
 export type DispatchType = (args: WalletAction) => WalletAction
 
-export const RPC_URL = "https://neat-solitary-darkness.solana-mainnet.quiknode.pro/ceec00cc12c1b9c377b73e78f2548b2732fe34b1/";
+export const RPC_URL = "";
+
+export enum BridgeNetworksName {
+  ALGORAND = "Algorand",
+  SOLANA = "Solana",
+  ETHEREUM = "ethereum",
+  POLYGON = "polygon",
+  AVALANCHE = "avalanche",
+}
