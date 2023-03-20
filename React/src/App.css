@@ -204,3 +204,31 @@
   color: #E8C342 !important;
   text-transform: uppercase;
 }
+
+.connect-wallet-btn {
+  margin-top: 5% !important;
+  color: white !important;
+  border: 1px solid !important;
+}
+
+.white {
+  color: white;
+}
+
+.align-left {
+  text-align: left;
+}
+
+.text-underline {
+  text-decoration: underline;
+}
+
+.zero-padding {
+  padding: 0px 0px 0px 0px !important;
+}
+
+.disconnect-btn {
+  margin-top: 10px;
+  border: 1px solid;
+  cursor: pointer;
+}

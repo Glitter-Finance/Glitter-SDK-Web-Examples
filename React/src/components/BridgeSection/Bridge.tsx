@@ -14,7 +14,8 @@ import React, {useState} from "react";
 import {useSelectors} from "../store/selectors";
 import {AlgorandBridge, EVMBridge, SolanaBridge} from "glitter-bridge-sdk-web-dev";
 import {BridgeNetworksName, RPC_URL} from "../store/type";
-import {ethers, Wallet} from "ethers";
+import {ethers} from "ethers";
+import { toast } from 'react-toastify';
 
 function Bridge() {
   const [optIn, setOptIn] = useState<boolean>(true);
@@ -22,6 +23,8 @@ function Bridge() {
   const [destinationTokenSymbol, setDestinationTokenSymbol] = useState<string>("");
   const [sourceTokenAmount, setSourceTokenAmount] = useState<number>(0);
   const {wallet} = useSelectors();
+
+  console.log("wallet", wallet);
   const checkForOptIn = async (tokenSymbol: string) => {
     if (wallet.destinationNetworkName === BridgeNetworksName.SOLANA || wallet.destinationWalletName === BridgeNetworksName.ALGORAND) {
       const bridge = wallet.destinationNetworkName === BridgeNetworksName.SOLANA ? new SolanaBridge(RPC_URL) : new AlgorandBridge();
@@ -52,7 +55,7 @@ function Bridge() {
     if (wallet.sourceNetworkName === BridgeNetworksName.SOLANA) {
       const bridge = new SolanaBridge(RPC_URL);
       console.log(wallet.sourceWalletAddress as string, sourceTokenSymbol, wallet.destinationNetworkName, wallet.destinationWalletAddress as string, destinationTokenSymbol, sourceTokenAmount);
-      const bridgeTransaction = await bridge.bridge(wallet.sourceWalletAddress as string, sourceTokenSymbol, wallet.destinationNetworkName as string, wallet.destinationWalletAddress as string, destinationTokenSymbol, 1);
+      const bridgeTransaction = await bridge.bridge(wallet.sourceWalletAddress as string, sourceTokenSymbol, wallet.destinationNetworkName as string, wallet.destinationWalletAddress as string, destinationTokenSymbol, 5);
       await wallet.sourceWalletProvider.signAndSendTransaction(bridgeTransaction);
     } else if (wallet.sourceNetworkName === BridgeNetworksName.ALGORAND) {
       const bridge = new AlgorandBridge();
@@ -81,6 +84,8 @@ function Bridge() {
       const bridgeResponse = await bridge.bridge(wallet.destinationNetworkName as string, sourceTokenSymbol, amount.toString(), wallet.destinationWalletAddress as string, signer)
       console.log(bridgeResponse);
     }
+
+    toast("Successful Transaction", { type: "success" });
   }
 
   return (

@@ -3,6 +3,8 @@ import {Container} from '@mui/material';
 import Header from "./components/Header";
 import BridgeSection from "./components/BridgeSection";
 import TransactionsSection from "./components/TransactionsSection";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   return (
@@ -13,6 +15,7 @@ function App() {
       <BridgeSection/>
       <br/>
       <TransactionsSection/>
+      <ToastContainer />
     </div>
   );
 }
