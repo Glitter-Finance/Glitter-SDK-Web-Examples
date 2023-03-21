@@ -18,7 +18,7 @@ export function handleWalletConnect(type: string) {
   return simulateHttpRequest(action);
 }
 
-export async function getTransactionStatus(type: string, wallet: IWallet) {
+export function getTransactionStatus(type: string, wallet: IWallet) {
   const action: WalletAction = {
     type: type,
     wallet
