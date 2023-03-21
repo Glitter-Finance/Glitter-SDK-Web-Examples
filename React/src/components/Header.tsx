@@ -4,7 +4,7 @@ import Item from "./Item";
 import {BridgeNetworksName, Chains, RPC_URL} from "./store/type";
 import {AlgorandBridge, EVMBridge, Wallets as GlitterWallets} from "glitter-bridge-sdk-web-dev";
 import {SolanaBridge, Chains as BridgeChains} from "glitter-bridge-sdk-web-dev";
-import {ADD_DESTINATION_WALLET, ADD_SOURCE_WALLET} from "./store/actionTypes";
+import {ADD_DESTINATION_WALLET, ADD_SOURCE_WALLET, CONNECT_WALLET_MODAL} from "./store/actionTypes";
 import {useSelectors} from "./store/selectors";
 import {useCallbacks} from "./store/callbacks";
 
@@ -25,19 +25,23 @@ const style = {
 
 function Header() {
   const {wallet} = useSelectors();
-  const {saveWallet} = useCallbacks();
+  const {saveWallet, walletConnect} = useCallbacks();
   const [sourceChain, setSourceChain] = useState<string>("");
   const [destinationChain, setDestinationChain] = useState<string>("");
   const [sourceChainVisible, setSourceChainVisible] = useState<boolean>(true);
   const [destinationChainVisible, setDestinationChainVisible] = useState<boolean>(true);
   const [sourceWallets, setSourceWallets] = useState<{ name: string, icon: string }[]>([]);
   const [destinationWallets, setDestinationWallets] = useState<{ name: string, icon: string }[]>([]);
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = React.useState<boolean>(false);
+
+  React.useEffect(() => {
+    setOpen(wallet.walletModal ? wallet.walletModal : false);
+  }, [wallet.walletModal]);
   const handleOpen = () => {
-    setOpen(true);
+    walletConnect(CONNECT_WALLET_MODAL);
   };
   const handleClose = () => {
-    setOpen(false);
+    walletConnect(CONNECT_WALLET_MODAL)
   };
 
   const onSourceWalletSelection = useCallback(async (walletName: "phantom" | "solflare" | "metamask" | "defly" | "pera") => {
@@ -47,7 +51,7 @@ function Header() {
       const result = await solanaWallet.connect();
       const phantomProvider = await solanaWallet.getProvider();
       let balances: { token: string; balance: number | undefined }[] = [];
-
+      console.log(phantomProvider);
       const solanaBridge = new SolanaBridge(RPC_URL);
       balances = await solanaBridge.getBalancesOfBridgeTokens(result?.toString() as string)
       saveWallet({
@@ -190,6 +194,7 @@ function Header() {
         </Grid>
       </Grid>
       <Modal
+        id={"wallet-modal"}
         open={open}
         onClose={handleClose}
         aria-labelledby="child-modal-title"

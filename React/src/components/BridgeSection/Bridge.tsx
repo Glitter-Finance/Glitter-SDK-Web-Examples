@@ -1,207 +1,366 @@
 import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  CardHeader,
-  Grid,
-  Radio,
-  Stack,
-  Typography
+    Alert,
+    Box,
+    Button,
+    Card,
+    CardContent,
+    CardHeader, FormControl, FormControlLabel, FormLabel,
+    Grid, LinearProgress,
+    Radio, RadioGroup,
+    Stack, TextField,
+    Typography
 } from "@mui/material";
 import Item from "../Item";
 import React, {useState} from "react";
 import {useSelectors} from "../store/selectors";
 import {AlgorandBridge, EVMBridge, SolanaBridge} from "glitter-bridge-sdk-web-dev";
-import {BridgeNetworksName, RPC_URL} from "../store/type";
+import {BridgeMapping, BridgeNetworksName, RPC_URL} from "../store/type";
 import {ethers} from "ethers";
-import { toast } from 'react-toastify';
+import {toast} from 'react-toastify';
+import {CONNECT_WALLET_MODAL, UPDATE_TRANSACTION_STATUS} from "../store/actionTypes";
+import {useCallbacks} from "../store/callbacks";
+import axios from "axios";
 
 function Bridge() {
-  const [optIn, setOptIn] = useState<boolean>(true);
-  const [sourceTokenSymbol, setSourceTokenSymbol] = useState<string>("");
-  const [destinationTokenSymbol, setDestinationTokenSymbol] = useState<string>("");
-  const [sourceTokenAmount, setSourceTokenAmount] = useState<number>(0);
-  const {wallet} = useSelectors();
-
-  console.log("wallet", wallet);
-  const checkForOptIn = async (tokenSymbol: string) => {
-    if (wallet.destinationNetworkName === BridgeNetworksName.SOLANA || wallet.destinationWalletName === BridgeNetworksName.ALGORAND) {
-      const bridge = wallet.destinationNetworkName === BridgeNetworksName.SOLANA ? new SolanaBridge(RPC_URL) : new AlgorandBridge();
-      const exists = await bridge.optInAccountExists(wallet.destinationWalletAddress as string, tokenSymbol);
-      setOptIn(!exists);
-      console.log(exists);
-    } else {
-      setOptIn(false);
-    }
-  }
-
-  const optInBtn = async () => {
-    if (wallet.destinationNetworkName === BridgeNetworksName.SOLANA) {
-      const bridge = new SolanaBridge(RPC_URL);
-      const optInTransaction = await bridge.optIn(wallet.destinationWalletAddress as string, destinationTokenSymbol);
-      await wallet.destinationWalletProvider.signAndSendTransaction(optInTransaction);
-    } else if (wallet.destinationNetworkName === BridgeNetworksName.ALGORAND) {
-      const bridge = new AlgorandBridge();
-      const optInTransaction = await bridge.optIn(wallet.destinationNetworkName, destinationTokenSymbol);
-      const signedTransaction = await wallet.destinationWalletProvider.signTransaction([optInTransaction]);
-      const transactionResponse = await bridge.sendSignTransaction(signedTransaction);
-      console.log(transactionResponse);
-    }
-  }
-
-  const bridge = async () => {
-    const amount = 100000;
-    if (wallet.sourceNetworkName === BridgeNetworksName.SOLANA) {
-      const bridge = new SolanaBridge(RPC_URL);
-      console.log(wallet.sourceWalletAddress as string, sourceTokenSymbol, wallet.destinationNetworkName, wallet.destinationWalletAddress as string, destinationTokenSymbol, sourceTokenAmount);
-      const bridgeTransaction = await bridge.bridge(wallet.sourceWalletAddress as string, sourceTokenSymbol, wallet.destinationNetworkName as string, wallet.destinationWalletAddress as string, destinationTokenSymbol, 5);
-      await wallet.sourceWalletProvider.signAndSendTransaction(bridgeTransaction);
-    } else if (wallet.sourceNetworkName === BridgeNetworksName.ALGORAND) {
-      const bridge = new AlgorandBridge();
-      console.log(wallet.sourceWalletAddress as string, sourceTokenSymbol, wallet.destinationNetworkName, wallet.destinationWalletAddress as string, destinationTokenSymbol, sourceTokenAmount);
-      const bridgeTransaction = await bridge.bridge(wallet.sourceWalletAddress as string, sourceTokenSymbol, wallet.destinationNetworkName as string, wallet.destinationWalletAddress as string, destinationTokenSymbol, 5);
-      console.log('BT', bridgeTransaction);
-      const signedTransaction = await wallet.sourceWalletProvider.signTransaction([bridgeTransaction]);
-      const transactionResponse = await bridge.sendSignTransaction(signedTransaction);
-      console.log(transactionResponse);
-    } else if (wallet.sourceNetworkName === BridgeNetworksName.POLYGON || wallet.sourceNetworkName === BridgeNetworksName.AVALANCHE || wallet.sourceNetworkName === BridgeNetworksName.ETHEREUM) {
-      console.log("EVM");
-      const provider = new ethers.providers.Web3Provider(window.ethereum, 43114);
-      const signer = provider.getSigner();
-      console.log(await signer.getAddress());
-      console.log(await signer.getChainId())
-      const bridge = new EVMBridge(wallet.sourceNetworkName);
-      const bridgeAllowances = await bridge.bridgeAllowance(
-        sourceTokenSymbol,
-        signer
-      )
-      console.log("Bridge Allowance", bridgeAllowances?.toNumber());
-      if (bridgeAllowances && bridgeAllowances?.toNumber() < amount) {
-        const allowance  = await bridge.approve(sourceTokenSymbol, amount.toString(), signer);
-        console.log(allowance);
-      }
-      const bridgeResponse = await bridge.bridge(wallet.destinationNetworkName as string, sourceTokenSymbol, amount.toString(), wallet.destinationWalletAddress as string, signer)
-      console.log(bridgeResponse);
+    const {walletConnect, transactionStatus} = useCallbacks();
+    const [optIn, setOptIn] = useState<boolean>(true);
+    const [sourceTokenSymbol, setSourceTokenSymbol] = useState<string>("");
+    const [destinationTokenSymbol, setDestinationTokenSymbol] = useState<string>("");
+    const [destinationTokens, setDestinationTokens] = useState<any>([]);
+    const [sourceTokenAmount, setSourceTokenAmount] = useState<number>(0);
+    const [loader, setLoader] = useState<boolean>();
+    const [alert, setAlert] = useState<boolean>();
+    const {wallet} = useSelectors();
+    const checkForOptIn = async (tokenSymbol: string) => {
+        console.log(tokenSymbol, wallet.destinationNetworkName);
+        if (wallet.destinationNetworkName === BridgeNetworksName.SOLANA || wallet.destinationNetworkName === BridgeNetworksName.ALGORAND) {
+            const bridge = wallet.destinationNetworkName === BridgeNetworksName.SOLANA ? new SolanaBridge(RPC_URL) : new AlgorandBridge();
+            const exists = await bridge.optInAccountExists(wallet.destinationWalletAddress as string, tokenSymbol.toLowerCase());
+            setOptIn(!exists);
+            console.log(exists);
+        } else {
+            setOptIn(false);
+        }
     }
 
-    toast("Successful Transaction", { type: "success" });
-  }
+    const optInBtn = async () => {
+        if (wallet.destinationNetworkName === BridgeNetworksName.SOLANA) {
+            const bridge = new SolanaBridge(RPC_URL);
+            const optInTransaction = await bridge.optIn(wallet.destinationWalletAddress as string, destinationTokenSymbol);
+            await wallet.destinationWalletProvider.signAndSendTransaction(optInTransaction);
+        } else if (wallet.destinationNetworkName === BridgeNetworksName.ALGORAND) {
+            const bridge = new AlgorandBridge();
+            const optInTransaction = await bridge.optIn(wallet.destinationNetworkName, destinationTokenSymbol);
+            const signedTransaction = await wallet.destinationWalletProvider.signTransaction([optInTransaction]);
+            const transactionResponse = await bridge.sendSignTransaction(signedTransaction);
+            console.log(transactionResponse);
+        }
+    }
 
-  return (
-    <Card className="basis-card-layout">
-      <CardHeader className="basic-card-header basic-card-header-typo" title="Bridge"/>
-      <CardContent>
-        <Grid container spacing={2} maxWidth="xl">
-          <Grid item xs={6}>
-            <Stack>
-              <Item>
-                <Typography>From Wallet</Typography>
-              </Item>
-              <Item>
-                <Box sx={{display: 'flex', alignItems: 'flex-end'}} className="bridge-box">
-                  <img src={`/${wallet.sourceWalletName}.png`} className="input-image" alt="broken"/>
-                  <Typography>{wallet.sourceWalletAddress?.slice(0, 20)}...</Typography>
-                </Box>
-              </Item>
-              <Item>
-                <Box sx={{display: 'flex', alignItems: 'flex-end'}} className="bridge-box">
-                  <img src={`/${wallet.sourceNetworkName}.png`} className="input-image" alt="broken"/>
-                  <Typography>{wallet.sourceNetworkName?.toUpperCase()}</Typography>
-                </Box>
-              </Item>
-              <Item>
-                <Typography>Source Token:</Typography>
-              </Item>
-              <Item>
-                {
-                  wallet.sourceTokens?.map((token) => {
-                    return (
-                      token.balance && token.balance > 0 ?
-                        <Stack direction="row" spacing={2} onClick={() => {
-                          setSourceTokenSymbol(token.token);
-                          setSourceTokenAmount(token.balance as number);
-                        }}>
-                          <Item><Radio className="radio-item"/></Item>
-                          <Item><img src="/Solana.png" className="input-image" alt="broken"/></Item>
-                          <Item><Typography>{token.token}</Typography></Item>
-                          <Item><Typography>{token.balance}</Typography></Item>
+    const filterTargetToken = async (token: string) => {
+        const destTokens = [];
+        const bridgeMappingObj = BridgeMapping.find(x => x.sourceToken === token);
+        if (wallet.destinationTokens && bridgeMappingObj) {
+            for (let index = 0; index < wallet.destinationTokens?.length; index++) {
+                if (bridgeMappingObj.destinationToken === wallet.destinationTokens[index].token) {
+                    destTokens.push({
+                        balance: wallet.destinationTokens[index].balance,
+                        token: wallet.destinationTokens[index].token,
+                        disabled: false,
+                    })
+                } else {
+                    destTokens.push({
+                        balance: wallet.destinationTokens[index].balance,
+                        token: wallet.destinationTokens[index].token,
+                        disabled: true,
+                    })
+                }
+            }
+
+            setDestinationTokens(destTokens);
+        }
+    }
+
+    const queryingTransaction = async (transaction: string) => {
+        if (transaction !== "") {
+            console.log("Loader Started");
+            setLoader(true);
+            let myInterval: string | number | NodeJS.Timer | undefined;
+            const timer = async () => {
+                const response = await axios.get(`https://api.glitterfinance.org/api/txns/search?status=Success&txnID=${transaction}&sort=date_desc&skip=0&take=10`);
+                if (response.data.transactions.length > 0) {
+                    console.log(response.data.transactions[0].status)
+                    if (response.data.transactions[0].status === "Success") {
+                        clearInterval(myInterval);
+                        setLoader(false);
+                        toast(response.data.transactions[0].subStatus, {type: "success"});
+                        setAlert(true);
+                        setTimeout(() => {
+                            setAlert(false);
+                        }, 3000);
+                        transactionStatus(UPDATE_TRANSACTION_STATUS, transaction, response.data.transactions[0].status, response.data.transactions[0].subStatus);
+                    }
+                }
+            }
+
+            myInterval = setInterval(timer, 1000);
+        }
+    }
+
+    const bridge = async () => {
+        try {
+            if (wallet.sourceNetworkName === BridgeNetworksName.SOLANA) {
+                const bridge = new SolanaBridge(RPC_URL);
+                console.log(wallet.sourceWalletAddress as string, sourceTokenSymbol, wallet.destinationNetworkName, wallet.destinationWalletAddress as string, destinationTokenSymbol, sourceTokenAmount);
+                const bridgeTransaction = await bridge.bridge(wallet.sourceWalletAddress as string, sourceTokenSymbol, wallet.destinationNetworkName as string, wallet.destinationWalletAddress as string, destinationTokenSymbol, sourceTokenAmount);
+                let transaction;
+                if (wallet.sourceWalletName === "phantom") {
+                    transaction = await wallet.sourceWalletProvider.signAndSendTransaction(bridgeTransaction);
+                    transaction = transaction.signature;
+                } else if (wallet.sourceWalletName === "solflare") {
+                    console.log(wallet.sourceWalletProvider);
+                    await wallet.sourceWalletProvider.connect();
+                    const signedTransaction = await wallet.sourceWalletProvider.signTransaction(bridgeTransaction);
+                    transaction = await bridge.sendSignedTransaction(signedTransaction.serialize());
+                }
+                console.log("Solana", transaction);
+                queryingTransaction(transaction);
+            } else if (wallet.sourceNetworkName === BridgeNetworksName.ALGORAND) {
+                const bridge = new AlgorandBridge();
+                console.log(wallet.sourceWalletAddress as string, sourceTokenSymbol, wallet.destinationNetworkName, wallet.destinationWalletAddress as string, destinationTokenSymbol, sourceTokenAmount);
+                const bridgeTransaction = await bridge.bridge(wallet.sourceWalletAddress as string, sourceTokenSymbol, wallet.destinationNetworkName as string, wallet.destinationWalletAddress as string, destinationTokenSymbol, sourceTokenAmount);
+                console.log('BT', bridgeTransaction);
+                const signedTransaction = await wallet.sourceWalletProvider.signTransaction([bridgeTransaction]);
+                const transactionResponse = await bridge.sendSignTransaction(signedTransaction);
+                console.log(transactionResponse);
+                console.log("Algorand", transactionResponse);
+                queryingTransaction(transactionResponse.txId);
+            } else if (wallet.sourceNetworkName === BridgeNetworksName.POLYGON || wallet.sourceNetworkName === BridgeNetworksName.AVALANCHE || wallet.sourceNetworkName === BridgeNetworksName.ETHEREUM) {
+                console.log("EVM");
+                const provider = new ethers.providers.Web3Provider(window.ethereum, 43114);
+                const signer = provider.getSigner();
+                console.log(await signer.getAddress());
+                console.log(await signer.getChainId())
+                const bridge = new EVMBridge(wallet.sourceNetworkName);
+                const bridgeAllowances = await bridge.bridgeAllowance(
+                    sourceTokenSymbol,
+                    signer
+                )
+                console.log("Bridge Allowance", bridgeAllowances?.toNumber());
+                if (bridgeAllowances && bridgeAllowances?.toNumber() < sourceTokenAmount) {
+                    const allowance = await bridge.approve(sourceTokenSymbol, sourceTokenAmount.toString(), signer);
+                    console.log(allowance);
+                }
+                const bridgeResponse = await bridge.bridge(wallet.destinationNetworkName as string, sourceTokenSymbol, sourceTokenAmount.toString(), wallet.destinationWalletAddress as string, signer)
+                console.log(bridgeResponse);
+                console.log("EVM", bridgeResponse)
+            }
+        } catch (e) {
+            console.log(JSON.stringify(new Error(e as any).message));
+            toast(new Error(e as any).message, {type: "error"});
+        }
+    }
+
+    const handleOpen = () => {
+        walletConnect(CONNECT_WALLET_MODAL);
+    }
+
+    return (
+        <Card className="basis-card-layout">
+            <CardHeader className="basic-card-header basic-card-header-typo" title="Bridge"/>
+            <CardContent>
+
+                <Grid container spacing={2} maxWidth="xl">
+                    {
+                        wallet.sourceWalletAddress !== ""
+                            ?
+                            <>
+                                <Grid item xs={6}>
+                                    <Stack>
+                                        <Item>
+                                            <Typography>From Wallet</Typography>
+                                        </Item>
+                                        <Item>
+                                            <Box sx={{display: 'flex', alignItems: 'flex-end'}} className="bridge-box">
+                                                <img src={`/${wallet.sourceWalletName}.png`} className="input-image"
+                                                     alt="broken"/>
+                                                <Typography>{wallet.sourceWalletAddress?.slice(0, 20)}...</Typography>
+                                            </Box>
+                                        </Item>
+                                        <Item>
+                                            <Box sx={{display: 'flex', alignItems: 'flex-end'}} className="bridge-box">
+                                                <img src={`/${wallet.sourceNetworkName}.png`} className="input-image"
+                                                     alt="broken"/>
+                                                <Typography>{wallet.sourceNetworkName?.toUpperCase()}</Typography>
+                                            </Box>
+                                        </Item>
+                                    </Stack>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Stack>
+                                        <Item>
+                                            <Typography>To Wallet</Typography>
+                                        </Item>
+                                        <Item>
+                                            <Box sx={{display: 'flex', alignItems: 'flex-end'}} className="bridge-box">
+                                                <img src={`/${wallet.destinationWalletName}.png`}
+                                                     className="input-image"
+                                                     alt="broken"/>
+                                                <Typography>{wallet.destinationWalletAddress?.slice(0, 20)}...</Typography>
+                                            </Box>
+                                        </Item>
+                                        <Item>
+                                            <Box sx={{display: 'flex', alignItems: 'flex-end'}} className="bridge-box">
+                                                <img src={`/${wallet.destinationNetworkName}.png`}
+                                                     className="input-image"
+                                                     alt="broken"/>
+                                                <Typography>{wallet.destinationNetworkName?.toUpperCase()}</Typography>
+                                            </Box>
+                                        </Item>
+                                    </Stack>
+                                </Grid>
+                            </>
+                            :
+                            <>
+                                <Grid item xs={6}>
+                                    <Button className="connect-wallet-btn" onClick={handleOpen}>Connect Source
+                                        Wallet</Button>
+                                </Grid>
+                            </>
+                    }
+                    {
+                        wallet.destinationWalletAddress !== "" && wallet.sourceWalletAddress !== ""
+                            ?
+                            <>
+                                <Grid item xs={3}></Grid>
+                                <Grid item xs={6}>
+                                    <Item>
+                                        <TextField
+                                            type="number"
+                                            id="outlined-controlled"
+                                            label="Amount"
+                                            size="small"
+                                            hidden={true}
+                                            hiddenLabel={true}
+                                            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                                                setSourceTokenAmount(parseFloat(event.target.value));
+                                            }}
+                                        />
+                                    </Item>
+                                </Grid>
+                                <Grid item xs={3}></Grid>
+                            </>
+                            :
+                            <></>
+                    }
+                    {
+                        wallet.destinationWalletAddress !== ""
+                            ?
+                            <>
+                                <Grid item xs={6}>
+                                    <Item>
+                                        <FormControl>
+                                            <FormLabel id="demo-row-radio-buttons-group-label">Source Token</FormLabel>
+                                            <RadioGroup
+                                                aria-labelledby="demo-row-radio-buttons-group-label"
+                                                name="row-radio-buttons-group"
+                                            >
+                                                {
+                                                    wallet.sourceTokens?.map((token) => {
+                                                        return (
+                                                            <FormControlLabel value={token.token} control={<Radio/>}
+                                                                              label={`${token.token} (${token.balance})`}
+                                                                              onClick={() => {
+                                                                                  filterTargetToken(token.token);
+                                                                                  setSourceTokenSymbol(token.token)
+                                                                              }}/>
+                                                        )
+                                                    })
+                                                }
+                                            </RadioGroup>
+                                        </FormControl>
+                                    </Item>
+                                </Grid>
+
+                                <Grid item xs={6}>
+                                    <Stack>
+                                        <Item>
+                                            <FormControl>
+                                                <FormLabel id="demo-row-radio-buttons-group-label">Destination
+                                                    Token</FormLabel>
+                                                <RadioGroup
+                                                    aria-labelledby="demo-row-radio-buttons-group-label"
+                                                    name="row-radio-buttons-group"
+                                                >
+                                                    {
+                                                        destinationTokens.map((token: any) => {
+                                                            return (
+
+                                                                <FormControlLabel value={token.token} control={<Radio/>}
+                                                                                  label={`${token.token} (${token.balance})`}
+                                                                                  disabled={token.disabled}
+                                                                                  onClick={() => {
+                                                                                      checkForOptIn(token.token);
+                                                                                      setDestinationTokenSymbol(token.token)
+                                                                                  }}/>
+                                                            )
+                                                        })
+                                                    }
+                                                </RadioGroup>
+                                            </FormControl>
+                                        </Item>
+                                    </Stack>
+                                </Grid>
+                            </>
+                            :
+                            <>
+                                <Grid item xs={6}>
+                                    <Button className="connect-wallet-btn" onClick={handleOpen}>Connect Destination
+                                        Wallet</Button>
+                                </Grid>
+                            </>
+                    }
+                </Grid>
+                <Grid container spacing={2} maxWidth="xl">
+                    <Grid item xs={6}>
+                        {
+                            loader ?
+                                <>
+                                    <LinearProgress color="secondary"/>
+                                </>
+                                :
+                                alert ?
+                                    <>
+                                        <Alert severity="success">Successfully Bridge.</Alert>
+                                    </>
+                                    : <></>
+                        }
+                    </Grid>
+                    <Grid item xs={6}>
+                        <Stack>
+                            <Item>
+                                {
+                                    wallet.sourceWalletAddress !== "" && wallet.destinationWalletAddress !== ""
+                                        ?
+                                        optIn ?
+                                            <Button size="large" className="item-button" onClick={() => {
+                                                optInBtn()
+                                            }}>OPT-IN</Button>
+                                            :
+                                            <Button size="large" className="item-button" onClick={() => {
+                                                bridge()
+                                            }}>SWAP</Button>
+                                        :
+                                        <>
+                                        </>
+                                }
+                            </Item>
                         </Stack>
-                        : <></>
-                    )
-                  })
-                }
-              </Item>
-            </Stack>
-          </Grid>
-          <Grid item xs={6}>
-            <Stack>
-              <Item>
-                <Typography>To Wallet</Typography>
-              </Item>
-              <Item>
-                <Box sx={{display: 'flex', alignItems: 'flex-end'}} className="bridge-box">
-                  <img src={`/${wallet.destinationWalletName}.png`} className="input-image" alt="broken"/>
-                  <Typography>{wallet.destinationWalletAddress?.slice(0, 20)}...</Typography>
-                </Box>
-              </Item>
-              <Item>
-                <Box sx={{display: 'flex', alignItems: 'flex-end'}} className="bridge-box">
-                  <img src={`/${wallet.destinationNetworkName}.png`} className="input-image" alt="broken"/>
-                  <Typography>{wallet.destinationNetworkName?.toUpperCase()}</Typography>
-                </Box>
-              </Item>
-              <Item>
-                <Typography>Destination Token:</Typography>
-              </Item>
-              <Item>
-                {
-                  wallet.destinationTokens?.map((token) => {
-                    return (
-                      // token.balance && token.balance > 0 ?
-                      <Stack direction="row" spacing={2} onClick={() => {
-                        checkForOptIn(token.token);
-                        setDestinationTokenSymbol(token.token)
-                      }}>
-                        <Item><Radio className="radio-item"/></Item>
-                        <Item><img src="/Solana.png" className="input-image" alt="broken"/></Item>
-                        <Item><Typography>{token.token}</Typography></Item>
-                        <Item><Typography>{token.balance}</Typography></Item>
-                      </Stack>
-                      // : <></>
-                    )
-                  })
-                }
-              </Item>
-            </Stack>
-          </Grid>
-        </Grid>
-        <Grid container spacing={2} maxWidth="xl">
-          <Grid item xs={6}>
-          </Grid>
-          <Grid item xs={6}>
-            <Stack>
-              <Item>
-                {
-                  optIn ?
-                    <Item>
-                      <Button size="large" className="item-button" onClick={() => {
-                        optInBtn()
-                      }}>OPT-IN</Button>
-                    </Item>
-                    :
-                    <></>
-                }
-                <Button size="large" className="item-button" onClick={() => {
-                  bridge()
-                }}>SWAP</Button>
-              </Item>
-            </Stack>
-          </Grid>
-        </Grid>
-      </CardContent>
-    </Card>
-  )
+                    </Grid>
+                </Grid>
+            </CardContent>
+        </Card>
+    )
 }
 
 export default Bridge;

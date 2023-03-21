@@ -15,7 +15,7 @@ function App() {
       <BridgeSection/>
       <br/>
       <TransactionsSection/>
-      <ToastContainer />
+      <ToastContainer position={"bottom-right"} />
     </div>
   );
 }
