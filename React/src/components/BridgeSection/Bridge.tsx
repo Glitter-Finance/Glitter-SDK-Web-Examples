@@ -13,8 +13,8 @@ import {
 import Item from "../Item";
 import React, {useEffect, useState} from "react";
 import {useSelectors} from "../store/selectors";
-import {AlgorandBridge, EVMBridge, SolanaBridge} from "glitter-bridge-sdk-web-dev";
-import {BridgeMapping, BridgeNetworksName, RPC_URL} from "../store/type";
+import {AlgorandBridge, ChainNames, EVMBridge, SolanaBridge} from "glitter-bridge-sdk-web-dev";
+import {BridgeMapping, RPC_URL} from "../store/type";
 import {ethers} from "ethers";
 import {toast} from 'react-toastify';
 import {ADD_SOURCE_WALLET, CONNECT_WALLET_MODAL, UPDATE_TRANSACTION_STATUS} from "../store/actionTypes";
@@ -53,8 +53,8 @@ function Bridge() {
 
     const checkForOptIn = async (tokenSymbol: string) => {
         console.log(tokenSymbol, wallet.destinationNetworkName);
-        if (wallet.destinationNetworkName === BridgeNetworksName.SOLANA || wallet.destinationNetworkName === BridgeNetworksName.ALGORAND) {
-            const bridge = wallet.destinationNetworkName === BridgeNetworksName.SOLANA ? new SolanaBridge(RPC_URL) : new AlgorandBridge();
+        if (wallet.destinationNetworkName === ChainNames.SOLANA || wallet.destinationNetworkName === ChainNames.ALGORAND) {
+            const bridge = wallet.destinationNetworkName === ChainNames.SOLANA ? new SolanaBridge(RPC_URL) : new AlgorandBridge();
             const exists = await bridge.optInAccountExists(wallet.destinationWalletAddress as string, tokenSymbol.toLowerCase());
             setOptIn(!exists);
             console.log(exists);
@@ -64,13 +64,13 @@ function Bridge() {
     }
 
     const optInBtn = async () => {
-        if (wallet.destinationNetworkName === BridgeNetworksName.SOLANA) {
+        if (wallet.destinationNetworkName === ChainNames.SOLANA) {
             const bridge = new SolanaBridge(RPC_URL);
             const optInTransaction = await bridge.optIn(wallet.destinationWalletAddress as string, destinationTokenSymbol);
             await wallet.destinationWalletProvider.signAndSendTransaction(optInTransaction);
-        } else if (wallet.destinationNetworkName === BridgeNetworksName.ALGORAND) {
+        } else if (wallet.destinationNetworkName === ChainNames.ALGORAND) {
             const bridge = new AlgorandBridge();
-            const optInTransaction = await bridge.optIn(wallet.destinationNetworkName, destinationTokenSymbol);
+            const optInTransaction = await bridge.optIn(wallet.destinationNetworkName as string, destinationTokenSymbol);
             const signedTransaction = await wallet.destinationWalletProvider.signTransaction([optInTransaction]);
             const transactionResponse = await bridge.sendSignTransaction(signedTransaction);
             console.log(transactionResponse);
@@ -129,26 +129,26 @@ function Bridge() {
     }
 
     const updateBalances = async () => {
-        if (wallet.sourceNetworkName === BridgeNetworksName.SOLANA) {
+        if (wallet.sourceNetworkName === ChainNames.SOLANA) {
             const bridge = new SolanaBridge(RPC_URL);
             const balances = await bridge.getBalancesOfBridgeTokens(wallet.sourceWalletAddress as string)
             saveWallet({
                 sourceTokens: balances
             }, ADD_SOURCE_WALLET);
-        } else if (wallet.destinationNetworkName === BridgeNetworksName.SOLANA) {
+        } else if (wallet.destinationNetworkName === ChainNames.SOLANA) {
             const bridge = new SolanaBridge(RPC_URL);
             const balances = await bridge.getBalancesOfBridgeTokens(wallet.destinationWalletAddress as string)
             saveWallet({
                 destinationTokens: balances
             }, ADD_SOURCE_WALLET);
         }
-        if (wallet.sourceNetworkName === BridgeNetworksName.ALGORAND) {
+        if (wallet.sourceNetworkName === ChainNames.ALGORAND) {
             const bridge = new AlgorandBridge();
             const balances = await bridge.getBalancesOfBridgeTokens(wallet.sourceWalletAddress as string)
             saveWallet({
                 sourceTokens: balances
             }, ADD_SOURCE_WALLET);
-        } else if (wallet.destinationNetworkName === BridgeNetworksName.ALGORAND) {
+        } else if (wallet.destinationNetworkName === ChainNames.ALGORAND) {
             const bridge = new AlgorandBridge();
             const balances = await bridge.getBalancesOfBridgeTokens(wallet.destinationWalletAddress as string)
             saveWallet({
@@ -159,7 +159,7 @@ function Bridge() {
 
     const bridge = async () => {
         try {
-            if (wallet.sourceNetworkName === BridgeNetworksName.SOLANA) {
+            if (wallet.sourceNetworkName === ChainNames.SOLANA) {
                 const bridge = new SolanaBridge(RPC_URL);
                 console.log(wallet.sourceWalletAddress as string, sourceTokenSymbol, wallet.destinationNetworkName, wallet.destinationWalletAddress as string, destinationTokenSymbol, sourceTokenAmount);
                 const bridgeTransaction = await bridge.bridge(wallet.sourceWalletAddress as string, sourceTokenSymbol, wallet.destinationNetworkName as string, wallet.destinationWalletAddress as string, destinationTokenSymbol, sourceTokenAmount);
@@ -174,7 +174,7 @@ function Bridge() {
                 }
                 console.log("Solana", transaction);
                 queryingTransaction(transaction);
-            } else if (wallet.sourceNetworkName === BridgeNetworksName.ALGORAND) {
+            } else if (wallet.sourceNetworkName === ChainNames.ALGORAND) {
                 const bridge = new AlgorandBridge();
                 console.log(wallet.sourceWalletAddress as string, sourceTokenSymbol, wallet.destinationNetworkName, wallet.destinationWalletAddress as string, destinationTokenSymbol, sourceTokenAmount);
                 const bridgeTransaction = await bridge.bridge(wallet.sourceWalletAddress as string, sourceTokenSymbol, wallet.destinationNetworkName as string, wallet.destinationWalletAddress as string, destinationTokenSymbol, sourceTokenAmount);
@@ -184,7 +184,7 @@ function Bridge() {
                 console.log(transactionResponse);
                 console.log("Algorand", transactionResponse);
                 queryingTransaction(transactionResponse.txId);
-            } else if (wallet.sourceNetworkName === BridgeNetworksName.POLYGON || wallet.sourceNetworkName === BridgeNetworksName.AVALANCHE || wallet.sourceNetworkName === BridgeNetworksName.ETHEREUM) {
+            } else if (wallet.sourceNetworkName === ChainNames.POLYGON || wallet.sourceNetworkName === ChainNames.AVALANCHE || wallet.sourceNetworkName === ChainNames.ETHEREUM) {
                 console.log("EVM");
                 const provider = new ethers.providers.Web3Provider(window.ethereum, 43114);
                 const signer = provider.getSigner();

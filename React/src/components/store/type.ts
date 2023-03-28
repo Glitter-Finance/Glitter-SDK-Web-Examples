@@ -1,3 +1,5 @@
+import {ChainNames} from "glitter-bridge-sdk-web-dev";
+
 export interface IWallet {
     sourceWalletAddress?: string;
     sourceWalletProvider?: any;
@@ -26,14 +28,6 @@ export type DispatchType = (args: WalletAction) => WalletAction
 
 export const RPC_URL = "https://neat-solitary-darkness.solana-mainnet.quiknode.pro/ceec00cc12c1b9c377b73e78f2548b2732fe34b1/";
 
-export enum BridgeNetworksName {
-    ALGORAND = "algorand",
-    SOLANA = "Solana",
-    ETHEREUM = "ethereum",
-    POLYGON = "polygon",
-    AVALANCHE = "avalanche",
-}
-
 export const BridgeMapping = [
   {
     sourceToken: "SOL",
@@ -59,7 +53,7 @@ export const BridgeMapping = [
 
 export const Chains = [
     {
-        name: BridgeNetworksName.SOLANA,
+        name: ChainNames.SOLANA,
         icon: "Solana.png",
         wallets: [
             {
@@ -73,7 +67,7 @@ export const Chains = [
         ]
     },
     {
-        name: BridgeNetworksName.ALGORAND,
+        name: ChainNames.ALGORAND,
         icon: "Algorand.png",
         wallets: [
             {
@@ -87,7 +81,7 @@ export const Chains = [
         ]
     },
     {
-        name: BridgeNetworksName.ETHEREUM,
+        name: ChainNames.ETHEREUM,
         icon: "ethereum.png",
         wallets: [
             {
@@ -97,7 +91,7 @@ export const Chains = [
         ]
     },
     {
-        name: BridgeNetworksName.AVALANCHE,
+        name: ChainNames.AVALANCHE,
         icon: "avalanche.png",
         wallets: [
             {
@@ -107,7 +101,7 @@ export const Chains = [
         ]
     },
     {
-        name: BridgeNetworksName.POLYGON,
+        name: ChainNames.POLYGON,
         icon: "polygon.png",
         wallets: [
             {
