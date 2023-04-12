@@ -7,6 +7,7 @@ import {SolanaBridge, Chains as BridgeChains} from "glitter-bridge-sdk-web-dev";
 import {ADD_DESTINATION_WALLET, ADD_SOURCE_WALLET, CONNECT_WALLET_MODAL} from "./store/actionTypes";
 import {useSelectors} from "./store/selectors";
 import {useCallbacks} from "./store/callbacks";
+import { BridgeNetworks, BridgeEvmNetworks } from "@glitter-finance/sdk-core";
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -46,19 +47,17 @@ function Header() {
 
   const onSourceWalletSelection = useCallback(async (walletName: "phantom" | "solflare" | "metamask" | "defly" | "pera" | "coin98") => {
     if (sourceChain === ChainNames.SOLANA) {
-      const typeWalletName: "phantom" | "solflare" | "coin98" = walletName.toLowerCase() as "phantom" | "solflare" | "coin98";
-      let solanaWallet;
-      if (typeWalletName === "coin98") {
-        solanaWallet = new GlitterWallets.networks[BridgeChains.SOLANA].coin98(ChainNames.SOLANA);
-      } else {
-        solanaWallet = new GlitterWallets.networks[BridgeChains.SOLANA][typeWalletName](RPC_URL);
-      }
+      const typeWalletName: "phantom" | "solflare" | "coin98" = walletName.toLowerCase() as "phantom" | "solflare";
+      let solanaWallet = new GlitterWallets.networks[BridgeChains.SOLANA][typeWalletName](RPC_URL);
+      
       const result = await solanaWallet.connect();
       const phantomProvider = await solanaWallet.getProvider();
       let balances: { token: string; balance: number | undefined }[] = [];
       console.log(phantomProvider);
       const solanaBridge = new SolanaBridge(RPC_URL);
-      balances = await solanaBridge.getBalancesOfBridgeTokens(result?.toString() as string)
+      console.log("Solana");
+      const balancesObj = await solanaBridge.getBalances(result?.toString() as string)
+      console.log(balancesObj, "testing");
       saveWallet({
         sourceWalletAddress: result?.toString(),
         sourceWalletName: walletName,
@@ -79,8 +78,9 @@ function Header() {
       }
 
       const algorandBridge = new AlgorandBridge();
-      balances = await algorandBridge.getBalancesOfBridgeTokens(algorandResponse.wallet[0] as string)
-
+      console.log("Algorand");
+      const balancesAlgo = await algorandBridge.getBalances(algorandResponse.wallet[0] as string)
+      console.log(balancesAlgo.keys(), balancesAlgo.values());
       saveWallet({
         sourceWalletAddress: algorandResponse.wallet[0],
         sourceWalletName: typeWalletName,
@@ -91,10 +91,10 @@ function Header() {
     } else if (sourceChain === ChainNames.ETHEREUM || sourceChain === ChainNames.POLYGON || sourceChain === ChainNames.AVALANCHE) {
       const metamask = new GlitterWallets.networks[BridgeChains.ETHEREUM].metamask();
       const result = await metamask.connect();
-      const evmBridge = new EVMBridge(sourceChain);
+      const evmBridge = new EVMBridge((sourceChain as unknown) as BridgeEvmNetworks);
       let balances: { token: string; balance: any | undefined }[] = [];
-      balances = await evmBridge.getBalancesOfBridgeTokens(result.data[0])
-      console.log(balances);
+      const balancesObj = await evmBridge.getBalances(result.data[0])
+      console.log(balancesObj);
       saveWallet({
         sourceWalletAddress: result.data[0],
         sourceWalletName: "metamask",
@@ -106,21 +106,18 @@ function Header() {
     }
   }, [saveWallet, wallet, sourceChain])
 
-  const onDestinationWalletSelection = useCallback(async (walletName: "phantom" | "solflare" | "metamask" | "defly" | "pera" | "coin98") => {
+  const onDestinationWalletSelection = useCallback(async (walletName: "phantom" | "solflare" | "metamask" | "defly" | "pera") => {
     if (destinationChain === ChainNames.SOLANA) {
-      const typeWalletName: "phantom" | "solflare" | "coin98" = walletName.toLowerCase() as "phantom" | "solflare" | "coin98";
+      const typeWalletName: "phantom" | "solflare" | "coin98" = walletName.toLowerCase() as "phantom" | "solflare";
       let solanaWallet;
-      if (typeWalletName === "coin98") {
-        solanaWallet = new GlitterWallets.networks[BridgeChains.SOLANA].coin98(ChainNames.SOLANA);
-      } else {
-        solanaWallet = new GlitterWallets.networks[BridgeChains.SOLANA][typeWalletName](RPC_URL);
-      }
+      solanaWallet = new GlitterWallets.networks[BridgeChains.SOLANA][typeWalletName](RPC_URL);
+      
       const result = await solanaWallet.connect();
       const phantomProvider = await solanaWallet.getProvider();
       let balances: { token: string; balance: number | undefined }[] = [];
 
       const solanaBridge = new SolanaBridge(RPC_URL);
-      balances = await solanaBridge.getBalancesOfBridgeTokens(result?.toString() as string)
+      // balances = await solanaBridge.getBalances(result?.toString() as string)
       saveWallet({
         destinationWalletAddress: result?.toString(),
         destinationWalletName: walletName,
@@ -141,7 +138,7 @@ function Header() {
       }
 
       const algorandBridge = new AlgorandBridge();
-      balances = await algorandBridge.getBalancesOfBridgeTokens(algorandResponse.wallet[0] as string)
+      // balances = await algorandBridge.getBalances(algorandResponse.wallet[0] as string)
 
 
       saveWallet({
@@ -155,9 +152,9 @@ function Header() {
     } else if (destinationChain === ChainNames.ETHEREUM || destinationChain === ChainNames.POLYGON || destinationChain === ChainNames.AVALANCHE) {
       const metamask = new GlitterWallets.networks[BridgeChains.ETHEREUM].metamask();
       const result = await metamask.connect();
-      const evmBridge = new EVMBridge(destinationChain);
+      const evmBridge = new EVMBridge((destinationChain as unknown) as BridgeEvmNetworks);
       let balances: { token: string; balance: any | undefined }[] = [];
-      balances = await evmBridge.getBalancesOfBridgeTokens(result.data[0])
+      balances = await evmBridge.getBalances(result.data[0])
       console.log(balances);
       saveWallet({
         destinationWalletAddress: result.data[0],
